@@ -1,5 +1,6 @@
-
 -- paises = 6 
-SELECT 
-	DISTINCT pais 
-FROM temporal;
+INSERT INTO pais(pais.nombre_pais)
+	SELECT 
+		DISTINCT pais 
+	FROM temporal;
+

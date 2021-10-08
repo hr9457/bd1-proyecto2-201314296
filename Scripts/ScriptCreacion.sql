@@ -69,5 +69,27 @@ CREATE TABLE votacion(
     primaria INT NOT NULL,
     educacion_meia INT NOT NULL,
     universitario INT NOT NULL,
-    anio_votacion INT NOT NULL
+    anio_votacion INT NOT NULL,
+    PRIMARY KEY (id_raza,id_sexo,id_municipio,id_partido),
+    FOREIGN KEY (id_raza) REFERENCES raza(id_raza),
+    FOREIGN KEY (id_sexo) REFERENCES sexo(id_sexo),
+    FOREIGN KEY (id_municipio) REFERENCES municipio(id_municipio),
+    FOREIGN KEY (id_partido) REFERENCES partido(id_partido)
 );
+
+
+
+-- *************************************
+-- Eliminacion de tablas
+-- *************************************
+DROP TABLE votacion; 
+DROP TABLE raza;
+DROP TABLE sexo;
+DROP TABLE municipio;  
+DROP TABLE departamento;
+DROP TABLE partido; 
+DROP TABLE pais;
+DROP TABLE region;
+
+ 
+

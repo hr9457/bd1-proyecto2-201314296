@@ -19,3 +19,4 @@ CREATE TABLE temporal(
 );
 
 select * from temporal;
+DROP TABLE temporal;
