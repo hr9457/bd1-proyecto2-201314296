@@ -5,17 +5,20 @@
 -- ************************************
 
 SELECT 
+	partido_politico.eleccion,
 	votacion_pais.anio,
 	pais.nombre_pais,
     partido.nombre_partido,
 	ROUND( ((partido_politico.votos/votacion_pais.votos) * 100) ,2) AS porcentaje
 FROM (
 		SELECT
+			todos_maximos.eleccion AS eleccion,
 			maximo_por_pais.anio AS anio,
 			maximo_por_pais.pais AS pais,
 			todos_maximos.partido AS partido,
 			maximo_por_pais.maximo AS votos
 		FROM(
+				-- 6 partidos uno por pais
 				SELECT 
 					maximos.anio AS anio,
 					maximos.pais AS pais,
@@ -46,6 +49,7 @@ FROM (
 				(
 					-- votaciones por partido politico en cada pais = 18
 					SELECT 
+						partido_municipio.eleccion AS eleccion,
 						partido_municipio.anio AS anio,
 						departamento.id_pais AS pais,
 						partido_municipio.partido AS partido,
@@ -56,13 +60,14 @@ FROM (
 								municipio.nombre_municipio AS municipio,
 								eleccion.anio_eleccion AS anio,
 								municipio.id_departamento AS departamento,
-								votacion.id_partido AS partido
+								votacion.id_partido AS partido,
+                                eleccion.nombre_eleccion AS eleccion
 							FROM votacion
 							INNER JOIN municipio ON municipio.id_municipio = votacion.id_municipio
 							INNER JOIN eleccion ON eleccion.id_eleccion = votacion.id_eleccion
 							) partido_municipio 
 							INNER JOIN departamento ON departamento.id_departamento = partido_municipio.departamento
-					GROUP BY partido_municipio.anio, departamento.id_pais, partido_municipio.partido
+					GROUP BY partido_municipio.eleccion ,partido_municipio.anio, departamento.id_pais, partido_municipio.partido
 					) todos_maximos
 		WHERE maximo_por_pais.pais = todos_maximos.pais and maximo_por_pais.anio = todos_maximos.anio and maximo_por_pais.maximo = todos_maximos.votos
     ) partido_politico
@@ -88,6 +93,16 @@ FROM (
                 votacion_pais ON votacion_pais.pais = partido_politico.pais
 		INNER JOIN pais ON pais.id_pais = partido_politico.pais
         INNER JOIN partido ON partido.id_partido =  partido_politico.partido;
+
+
+-- ************************************
+-- 1. Desplegar total de votos y porcentaje de votos de mujeres por departamento
+-- y por pais. Tiene que dar el 100 por ciento
+-- ************************************
+
+
+
+
 
 
 
