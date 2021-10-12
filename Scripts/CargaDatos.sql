@@ -75,8 +75,8 @@ INSERT INTO votacion (votacion.analfabetos, votacion.alfabetos,
                         votacion.universitario, votacion.id_raza, votacion.id_sexo,
                         votacion.id_municipio, votacion.id_partido, votacion.id_eleccion)
 	SELECT
-		temporal.analfabetos,
-		temporal.alfabetos,
+		temporal.analfabeto,
+		temporal.alfabeto,
 		temporal.primaria,
 		temporal.nivel_medio,
 		temporal.universitario,
