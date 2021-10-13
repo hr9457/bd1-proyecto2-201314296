@@ -97,60 +97,73 @@ FROM (
 
 
 
+
+
 -- ************************************
 -- 2. Desplegar total de votos y porcentaje de votos de mujeres por departamento
 -- y por pais. Tiene que dar el 100 por ciento
 -- ************************************
 
--- cantidad de votos por pais dividio por departamento = 81 departamentos
 SELECT 
-	votaciones.anio  AS anio,
-	departamento.id_pais AS pais,
-    departamento.id_departamento AS departamento,
-	SUM(votaciones.total) AS votos
+	voto_por_departamento.anio,
+    voto_por_departamento.pais,
+    voto_por_departamento.departamento,
+    voto_por_departamento.votos,
+    ROUND( ( voto_por_departamento.votos / total_de_votos.votos ) * 100 ,2) AS porcentaje
 FROM(
-	-- conteo de todos los votantes (solo mujeres) 
-	SELECT
-		votacion.analfabetos + votacion.alfabetos AS total,
-		municipio.nombre_municipio AS municipio,
-		eleccion.anio_eleccion AS anio,
-		municipio.id_departamento AS departamento,
-        votacion.id_sexo AS sexo,
-        sexo.nombre_sexo
-	FROM votacion
-		INNER JOIN municipio ON municipio.id_municipio = votacion.id_municipio
-		INNER JOIN eleccion ON eleccion.id_eleccion = votacion.id_eleccion 
-		INNER JOIN sexo ON  sexo.id_sexo = votacion.id_sexo
-	WHERE sexo.nombre_sexo = 'mujeres'
-    -- 
-	) votaciones
-	INNER JOIN departamento ON departamento.id_departamento = votaciones.departamento
-GROUP BY votaciones.anio, departamento.id_pais,departamento.id_departamento
-ORDER BY departamento.id_pais, departamento.id_departamento;
 
+		-- cantidad de votos por pais dividio por departamento = 81 departamentos
+		SELECT 
+			votaciones.anio  AS anio,
+			departamento.id_pais AS pais,
+			departamento.id_departamento AS departamento,
+			SUM(votaciones.total) AS votos
+		FROM(
+			-- conteo de todos los votantes (solo mujeres) 
+			SELECT
+				votacion.analfabetos + votacion.alfabetos AS total,
+				municipio.nombre_municipio AS municipio,
+				eleccion.anio_eleccion AS anio,
+				municipio.id_departamento AS departamento,
+				votacion.id_sexo AS sexo,
+				sexo.nombre_sexo
+			FROM votacion
+				INNER JOIN municipio ON municipio.id_municipio = votacion.id_municipio
+				INNER JOIN eleccion ON eleccion.id_eleccion = votacion.id_eleccion 
+				INNER JOIN sexo ON  sexo.id_sexo = votacion.id_sexo
+			WHERE sexo.nombre_sexo = 'mujeres'
+			-- 
+			) votaciones
+			INNER JOIN departamento ON departamento.id_departamento = votaciones.departamento
+		GROUP BY votaciones.anio, departamento.id_pais,departamento.id_departamento
+		ORDER BY departamento.id_pais, departamento.id_departamento
+        ) voto_por_departamento     
+        INNER JOIN (
+			-- votos de mujeres por pais = 6 paises
+			SELECT 
+				votaciones_mujeres.anio AS anio,
+				departamento.id_pais AS pais,
+				SUM(votaciones_mujeres.total) AS votos
+			FROM (
+					-- conteo de todos los votantes (solo mujeres) 
+					SELECT
+						votacion.analfabetos + votacion.alfabetos AS total,
+						municipio.id_municipio AS municipio,
+						eleccion.anio_eleccion AS anio,
+						municipio.id_departamento AS departamento,
+						votacion.id_sexo AS sexo,
+						sexo.nombre_sexo
+					FROM votacion
+						INNER JOIN municipio ON municipio.id_municipio = votacion.id_municipio
+						INNER JOIN eleccion ON eleccion.id_eleccion = votacion.id_eleccion 
+						INNER JOIN sexo ON  sexo.id_sexo = votacion.id_sexo
+					WHERE sexo.nombre_sexo = 'mujeres'
+					) votaciones_mujeres
+					INNER JOIN departamento ON departamento.id_departamento = votaciones_mujeres.departamento 
+			GROUP BY votaciones_mujeres.anio, departamento.id_pais
+            ) total_de_votos ON total_de_votos.anio = voto_por_departamento.anio  and total_de_votos.pais = voto_por_departamento.pais
+ORDER BY voto_por_departamento.pais;
 
--- votos de mujeres por pais = 6 paises
-SELECT 
-	votaciones_mujeres.anio AS anio,
-    departamento.id_pais AS pais,
-	SUM(votaciones_mujeres.total) AS votos
-FROM (
-		-- conteo de todos los votantes (solo mujeres) 
-		SELECT
-			votacion.analfabetos + votacion.alfabetos AS total,
-			municipio.id_municipio AS municipio,
-			eleccion.anio_eleccion AS anio,
-			municipio.id_departamento AS departamento,
-			votacion.id_sexo AS sexo,
-			sexo.nombre_sexo
-		FROM votacion
-			INNER JOIN municipio ON municipio.id_municipio = votacion.id_municipio
-			INNER JOIN eleccion ON eleccion.id_eleccion = votacion.id_eleccion 
-			INNER JOIN sexo ON  sexo.id_sexo = votacion.id_sexo
-		WHERE sexo.nombre_sexo = 'mujeres'
-        ) votaciones_mujeres
-        INNER JOIN departamento ON departamento.id_departamento = votaciones_mujeres.departamento 
-GROUP BY votaciones_mujeres.anio, departamento.id_pais;
 
 
 
