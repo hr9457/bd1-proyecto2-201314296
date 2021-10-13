@@ -84,8 +84,8 @@ FROM (
 						eleccion.anio_eleccion AS anio,
 						municipio.id_departamento AS departamento
 					FROM votacion
-					INNER JOIN municipio ON municipio.id_municipio = votacion.id_municipio
-					INNER JOIN eleccion ON eleccion.id_eleccion = votacion.id_eleccion
+						INNER JOIN municipio ON municipio.id_municipio = votacion.id_municipio
+						INNER JOIN eleccion ON eleccion.id_eleccion = votacion.id_eleccion
 					) votaciones
 					INNER JOIN departamento ON departamento.id_departamento = votaciones.departamento
 				GROUP BY votaciones.anio, departamento.id_pais
@@ -95,18 +95,131 @@ FROM (
         INNER JOIN partido ON partido.id_partido =  partido_politico.partido;
 
 
+
+
 -- ************************************
--- 1. Desplegar total de votos y porcentaje de votos de mujeres por departamento
+-- 2. Desplegar total de votos y porcentaje de votos de mujeres por departamento
 -- y por pais. Tiene que dar el 100 por ciento
 -- ************************************
 
+-- cantidad de votos por pais dividio por departamento = 81 departamentos
+SELECT 
+	votaciones.anio  AS anio,
+	departamento.id_pais AS pais,
+    departamento.id_departamento AS departamento,
+	SUM(votaciones.total) AS votos
+FROM(
+	-- conteo de todos los votantes (solo mujeres) 
+	SELECT
+		votacion.analfabetos + votacion.alfabetos AS total,
+		municipio.nombre_municipio AS municipio,
+		eleccion.anio_eleccion AS anio,
+		municipio.id_departamento AS departamento,
+        votacion.id_sexo AS sexo,
+        sexo.nombre_sexo
+	FROM votacion
+		INNER JOIN municipio ON municipio.id_municipio = votacion.id_municipio
+		INNER JOIN eleccion ON eleccion.id_eleccion = votacion.id_eleccion 
+		INNER JOIN sexo ON  sexo.id_sexo = votacion.id_sexo
+	WHERE sexo.nombre_sexo = 'mujeres'
+    -- 
+	) votaciones
+	INNER JOIN departamento ON departamento.id_departamento = votaciones.departamento
+GROUP BY votaciones.anio, departamento.id_pais,departamento.id_departamento
+ORDER BY departamento.id_pais, departamento.id_departamento;
+
+
+-- votos de mujeres por pais = 6 paises
+SELECT 
+	votaciones_mujeres.anio AS anio,
+    departamento.id_pais AS pais,
+	SUM(votaciones_mujeres.total) AS votos
+FROM (
+		-- conteo de todos los votantes (solo mujeres) 
+		SELECT
+			votacion.analfabetos + votacion.alfabetos AS total,
+			municipio.id_municipio AS municipio,
+			eleccion.anio_eleccion AS anio,
+			municipio.id_departamento AS departamento,
+			votacion.id_sexo AS sexo,
+			sexo.nombre_sexo
+		FROM votacion
+			INNER JOIN municipio ON municipio.id_municipio = votacion.id_municipio
+			INNER JOIN eleccion ON eleccion.id_eleccion = votacion.id_eleccion 
+			INNER JOIN sexo ON  sexo.id_sexo = votacion.id_sexo
+		WHERE sexo.nombre_sexo = 'mujeres'
+        ) votaciones_mujeres
+        INNER JOIN departamento ON departamento.id_departamento = votaciones_mujeres.departamento 
+GROUP BY votaciones_mujeres.anio, departamento.id_pais;
 
 
 
 
 
-
-
+-- ************************************
+-- 4. Desplegar todas las regiones por paises
+-- en donde predomina la raza indigena, hay mas votos que otras razas 
+-- ************************************
+SELECT 
+	votos_por_raza.pais,
+    votos_por_raza.anio,
+    votos_por_raza.region,
+    votos_por_raza.raza,
+    votos_por_raza.votos
+FROM (
+		-- 66 resultados 
+		SELECT 
+			departamento.id_pais AS pais,
+			votaciones.anio AS anio,
+			departamento.id_region AS region,
+			votaciones.raza AS raza,
+			SUM(votaciones.poblacion) AS votos
+		FROM (
+				-- votaciones viendo la raza que voto = 20970 
+				SELECT
+					(votacion.analfabetos + votacion.alfabetos) AS poblacion,
+					votacion.id_municipio AS municipio,
+					eleccion.anio_eleccion AS anio,
+					votacion.id_raza AS raza,
+					raza.nombre_raza
+				FROM votacion
+					INNER JOIN eleccion ON eleccion.id_eleccion = votacion.id_eleccion
+					INNER JOIN municipio ON municipio.id_municipio = votacion.id_municipio
+					INNER JOIN raza ON raza.id_raza = votacion.id_raza
+				) votaciones
+				INNER JOIN departamento ON departamento.id_departamento = votaciones.municipio
+		GROUP BY departamento.id_pais,votaciones.anio, departamento.id_region,votaciones.raza
+		ORDER BY departamento.id_pais
+        ) votos_por_raza,
+        
+        (
+			-- 22 resultados 
+			SELECT 
+				departamento.id_pais AS pais,
+				votaciones.anio AS anio,
+				departamento.id_region AS region,
+				votaciones.raza AS raza,
+				SUM(votaciones.poblacion) AS votos
+			FROM (
+					-- votaciones viendo la raza que voto = 20970 
+					SELECT
+						(votacion.analfabetos + votacion.alfabetos) AS poblacion,
+						votacion.id_municipio AS municipio,
+						eleccion.anio_eleccion AS anio,
+						votacion.id_raza AS raza,
+						raza.nombre_raza
+					FROM votacion
+						INNER JOIN eleccion ON eleccion.id_eleccion = votacion.id_eleccion
+						INNER JOIN municipio ON municipio.id_municipio = votacion.id_municipio
+						INNER JOIN raza ON raza.id_raza = votacion.id_raza
+					WHERE raza.nombre_raza = 'INDIGENAS'            
+					) votaciones
+					INNER JOIN departamento ON departamento.id_departamento = votaciones.municipio
+			GROUP BY departamento.id_pais,votaciones.anio, departamento.id_region,votaciones.raza
+			ORDER BY departamento.id_pais
+            ) votos_indigenas
+WHERE  votos_por_raza.pais = votos_indigenas.pais and votos_por_raza.anio = votos_indigenas.anio and votos_por_raza.region = votos_indigenas.region
+		and votos_por_raza.raza = votos_indigenas.raza and votos_indigenas.votos >= votos_por_raza.votos;
 
 
 
