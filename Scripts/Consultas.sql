@@ -253,7 +253,7 @@ FROM (
 
 
 -- ************************************
--- 4. Desplegar total de votos de cada nivel de escolaridad
+-- 8. Desplegar total de votos de cada nivel de escolaridad
 -- por pais = 6 paises
 -- ************************************
 SELECT 
@@ -275,6 +275,72 @@ FROM (
     INNER JOIN departamento ON departamento.id_departamento = votaciones.departamento
     INNER JOIN pais ON pais.id_pais = departamento.id_pais
 GROUP BY departamento.id_pais;
+
+
+
+
+
+
+-- ************************************
+-- 9. Desplegar el nombre del pais y el porcentaje de votos por raza
+-- ************************************
+SELECT
+	pais.nombre_pais,
+    raza.nombre_raza,
+    ROUND( (votacion_por_raza.votos / votos_por_pais.votos) * 100 ,2) AS porcentaje
+FROM (
+		-- 18 resultados votaciones por raza
+		SELECT 
+			departamento.id_pais AS pais,
+			votaciones.raza AS raza,
+			SUM(votaciones.votos) AS votos
+		FROM (
+				-- votaciones viendo la raza que voto = 20970 
+				SELECT
+					(votacion.analfabetos + votacion.alfabetos) AS votos,
+					votacion.id_municipio AS municipio,
+					votacion.id_raza AS raza
+				FROM votacion
+					INNER JOIN eleccion ON eleccion.id_eleccion = votacion.id_eleccion
+					INNER JOIN municipio ON municipio.id_municipio = votacion.id_municipio
+                    
+				) votaciones
+				INNER JOIN departamento ON departamento.id_departamento = votaciones.municipio
+		GROUP BY departamento.id_pais, votaciones.raza
+		ORDER BY departamento.id_pais      
+        
+		) votacion_por_raza 
+		INNER JOIN (        
+			-- votos por pais
+			SELECT 
+				departamento.id_pais AS pais,
+				SUM(votaciones.votos) AS votos
+			FROM (
+					-- votaciones viendo la raza que voto = 20970 
+					SELECT
+						(votacion.analfabetos + votacion.alfabetos) AS votos,
+						votacion.id_municipio AS municipio,
+						votacion.id_raza AS raza
+					FROM votacion
+						INNER JOIN eleccion ON eleccion.id_eleccion = votacion.id_eleccion
+						INNER JOIN municipio ON municipio.id_municipio = votacion.id_municipio
+						
+					) votaciones
+					INNER JOIN departamento ON departamento.id_departamento = votaciones.municipio
+			GROUP BY departamento.id_pais
+			ORDER BY departamento.id_pais            
+            ) votos_por_pais ON votos_por_pais.pais = votacion_por_raza.pais
+            INNER JOIN pais ON pais.id_pais = votacion_por_raza.pais
+            INNER JOIN raza ON raza.id_raza = votacion_por_raza.raza
+ORDER BY pais.nombre_pais;
+            
+
+
+
+
+
+
+
 
 
 
