@@ -251,6 +251,68 @@ FROM (
 
 
 
+-- ************************************
+-- 4. Desplegar todas las regiones por paises
+-- en donde predomina la raza indigena, hay mas votos que otras razas 
+-- cantidad = 4
+-- ************************************
+SELECT
+	pais.nombre_pais,
+    region.nombre_region,
+    departamento.nombre_departamento,
+    ROUND( ( votos_por_departamento.votos / votos_por_region.votos ) *100 ,2) AS porcentaje
+FROM (
+		-- votos por pais acumuladop por region y departamento = 81
+		SELECT 
+			departamento.id_pais AS pais,
+			departamento.id_region AS region,
+			departamento.id_departamento AS departamento,
+			SUM(votaciones.votos) AS votos
+		FROM (
+				-- votaciones viendo la raza que voto = 20970 
+				SELECT
+					(votacion.analfabetos + votacion.alfabetos) AS votos,
+					votacion.id_municipio AS municipio,
+					votacion.id_raza AS raza
+				FROM votacion
+					INNER JOIN eleccion ON eleccion.id_eleccion = votacion.id_eleccion
+					INNER JOIN municipio ON municipio.id_municipio = votacion.id_municipio
+					
+				) votaciones
+				INNER JOIN departamento ON departamento.id_departamento = votaciones.municipio
+		GROUP BY departamento.id_pais, departamento.id_region, departamento.id_departamento
+		ORDER BY departamento.id_pais, departamento.id_region
+        ) votos_por_departamento
+        INNER JOIN (
+					 -- votos por pais y regiones = 22
+					SELECT 
+						departamento.id_pais AS pais,
+						departamento.id_region AS region,
+						SUM(votaciones.votos) AS votos
+					FROM (
+							-- votaciones viendo la raza que voto = 20970 
+							SELECT
+								(votacion.analfabetos + votacion.alfabetos) AS votos,
+								votacion.id_municipio AS municipio,
+								votacion.id_raza AS raza
+							FROM votacion
+								INNER JOIN eleccion ON eleccion.id_eleccion = votacion.id_eleccion
+								INNER JOIN municipio ON municipio.id_municipio = votacion.id_municipio
+								
+							) votaciones
+							INNER JOIN departamento ON departamento.id_departamento = votaciones.municipio
+					GROUP BY departamento.id_pais, departamento.id_region
+					ORDER BY departamento.id_pais        
+        ) votos_por_region ON votos_por_region.pais = votos_por_departamento.pais and votos_por_region.region = votos_por_departamento.region
+		INNER JOIN pais ON pais.id_pais = votos_por_region.pais
+        INNER JOIN region ON region.id_region = votos_por_region.region
+        INNER JOIN departamento ON departamento.id_departamento = votos_por_departamento.departamento;
+
+
+
+
+
+
 
 -- ************************************
 -- 8. Desplegar total de votos de cada nivel de escolaridad
