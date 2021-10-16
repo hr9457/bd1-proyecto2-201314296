@@ -4,6 +4,8 @@
 # Reglas de Normalizacion 
 
 
+
+
 <p></p>
 
 # Modelo
@@ -144,15 +146,27 @@
 
 # Relacion entre Entidades
 
-| Tabla     | Tabla     | Relacion   |
-| ------    | ------    | ------     |
-
+| Tabla         | Tabla         | Relacion   |
+| ------        | ------        | ------     |
+| pais          | region        |Un pais puede tener varias regiones y una region pertenece a un pais|
+| region        | departamento  |Una region puede tener uno o mas departamentos y un departamento pertenece una reigon            |
+| depatamento   | municipio     |Un departamento tiene uno o mas municipios y un municipo pertenece a un departament     |
+| pais          | partido       |Un pais puede tener uno o mas partidos politicos y un partido politico pertence y participa en un pais     |
+| sexo          | votacion      | Un votacion esta distingidad por un tipo de sexo y un tipo de sexo puede estar en mas de una votacion     |
+| raza          | votacion      |Una votaccion esta distingidad por un tipo de raza y un tipo de raza puede estar en mas de una votacion     |
+| seleccion     | votacion      |Una votacione tiene un tipo de seleccion y una seleccion de votacion puede tener mas de una votacion      |
+| partido       | votacion      |Un partido puede tener mas de una votacion y una votacion pertence a un partido |
+| municipio     | votacion      |Un municipio puede tener mas de una votacion y una votacion pertenece o fuer realizada en un municipio     |
 
 
 # Restriccione para Utilizar 
 
+* Los Votantes solo pueden estar distinguidas como hombre y mujer
+* Los Votantes puede pertenecer a una sola raza
+* Las Votaciones solo estan distinguidas por elecciones a nivel Municipal
 
-# Consideraciones del Diseño
+
+
 
 
 
