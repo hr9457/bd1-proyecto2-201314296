@@ -544,7 +544,8 @@ ORDER BY pais.id_pais;
 
 
 -- ************************************
--- 10. 
+-- 10. pais donde la disputa de partidos halla sido mas peliada
+-- 1 resultado = el salvador
 -- ************************************
 
 SELECT
@@ -910,8 +911,3 @@ WHERE voto_por_departamento.votos > departamento_guatemala.votos;
 
 
 -- consulta para hacer conteos de las de las consultas
-SELECT 
-	COUNT(*)
-	FROM(
-
-    ) conteo;
