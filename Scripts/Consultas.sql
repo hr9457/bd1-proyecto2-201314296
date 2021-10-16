@@ -595,6 +595,117 @@ FROM (
 
 
 
+
+-- ************************************
+-- 12. resultado = 1
+-- ************************************
+
+SELECT
+	pais.nombre_pais,
+	maximo.porcentaje
+FROM (
+		SELECT
+			MAX( porcentaje_por_pais.porcentaje ) as porcentaje
+		FROM (
+				SELECT 
+					analfabeta_por_pais.pais as pais,
+					ROUND( (analfabeta_por_pais.votos / votacion_por_pais.votos) * 100 ,2) as porcentaje
+				FROM (
+						-- votacion por pais de personas analfabetas
+						SELECT
+							region.id_pais AS pais,
+							SUM(votos_pais.votos) AS votos
+						FROM (
+								SELECT
+									departamento.id_departamento AS departamento,
+									municipio.id_municipio AS municipio,
+									votacion.analfabetos AS votos
+								FROM votacion
+									INNER JOIN sexo ON  sexo.id_sexo = votacion.id_sexo
+									INNER JOIN raza ON  raza.id_raza = votacion.id_raza
+									INNER JOIN municipio ON votacion.id_municipio = municipio.id_municipio
+									INNER JOIN departamento ON departamento.id_departamento = municipio.id_departamento
+							) votos_pais
+							INNER JOIN departamento ON departamento.id_departamento = votos_pais.departamento
+							INNER JOIN region ON region.id_region = departamento.id_region
+						GROUP BY region.id_pais
+					) analfabeta_por_pais
+					
+					INNER JOIN (
+								-- votacion por pais 
+								SELECT
+									region.id_pais AS pais,
+									SUM(votos_pais.votos) AS votos
+								FROM (
+										SELECT
+											departamento.id_departamento AS departamento,
+											municipio.id_municipio AS municipio,
+											(votacion.alfabetos + votacion.analfabetos) AS votos
+										FROM votacion
+											INNER JOIN sexo ON  sexo.id_sexo = votacion.id_sexo
+											INNER JOIN raza ON  raza.id_raza = votacion.id_raza
+											INNER JOIN municipio ON votacion.id_municipio = municipio.id_municipio
+											INNER JOIN departamento ON departamento.id_departamento = municipio.id_departamento
+									) votos_pais
+									INNER JOIN departamento ON departamento.id_departamento = votos_pais.departamento
+									INNER JOIN region ON region.id_region = departamento.id_region
+								GROUP BY region.id_pais
+								) votacion_por_pais on votacion_por_pais.pais = analfabeta_por_pais.pais
+				) porcentaje_por_pais
+		) maximo
+        
+        INNER JOIN (
+					SELECT 
+						analfabeta_por_pais.pais as pais,
+						ROUND( (analfabeta_por_pais.votos / votacion_por_pais.votos) * 100 ,2) as porcentaje
+					FROM (
+							-- votacion por pais de personas analfabetas
+							SELECT
+								region.id_pais AS pais,
+								SUM(votos_pais.votos) AS votos
+							FROM (
+									SELECT
+										departamento.id_departamento AS departamento,
+										municipio.id_municipio AS municipio,
+										votacion.analfabetos AS votos
+									FROM votacion
+										INNER JOIN sexo ON  sexo.id_sexo = votacion.id_sexo
+										INNER JOIN raza ON  raza.id_raza = votacion.id_raza
+										INNER JOIN municipio ON votacion.id_municipio = municipio.id_municipio
+										INNER JOIN departamento ON departamento.id_departamento = municipio.id_departamento
+								) votos_pais
+								INNER JOIN departamento ON departamento.id_departamento = votos_pais.departamento
+								INNER JOIN region ON region.id_region = departamento.id_region
+							GROUP BY region.id_pais
+						) analfabeta_por_pais
+						
+						INNER JOIN (
+									-- votacion por pais 
+									SELECT
+										region.id_pais AS pais,
+										SUM(votos_pais.votos) AS votos
+									FROM (
+											SELECT
+												departamento.id_departamento AS departamento,
+												municipio.id_municipio AS municipio,
+												(votacion.alfabetos + votacion.analfabetos) AS votos
+											FROM votacion
+												INNER JOIN sexo ON  sexo.id_sexo = votacion.id_sexo
+												INNER JOIN raza ON  raza.id_raza = votacion.id_raza
+												INNER JOIN municipio ON votacion.id_municipio = municipio.id_municipio
+												INNER JOIN departamento ON departamento.id_departamento = municipio.id_departamento
+										) votos_pais
+										INNER JOIN departamento ON departamento.id_departamento = votos_pais.departamento
+										INNER JOIN region ON region.id_region = departamento.id_region
+									GROUP BY region.id_pais
+									) votacion_por_pais on votacion_por_pais.pais = analfabeta_por_pais.pais
+						) porcentaje_por_pais on porcentaje_por_pais.porcentaje = maximo.porcentaje
+                        
+                        INNER JOIN pais on pais.id_pais = porcentaje_por_pais.pais;
+
+
+
+
 -- consulta para hacer conteos de las de las consultas
 SELECT 
 	COUNT(*)
