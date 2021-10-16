@@ -8,8 +8,11 @@ CREATE TABLE pais(
 
 -- tabla de regiones
 CREATE TABLE region(
-	id_region INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    nombre_region VARCHAR(100) NOT NULL
+	id_region INT NOT NULL AUTO_INCREMENT,
+    nombre_region VARCHAR(100) NOT NULL,
+    id_pais INT NOT NULL,
+    PRIMARY KEY (id_region, id_pais),
+    FOREIGN KEY (id_pais) REFERENCES pais(id_pais)
 );
 
 -- tabla de departamentos
@@ -17,9 +20,7 @@ CREATE TABLE departamento(
 	id_departamento INT NOT NULL AUTO_INCREMENT,
     nombre_departamento VARCHAR(100) NOT NULL,
     id_region INT NOT NULL,
-    id_pais INT NOT NULL,
-    PRIMARY KEY (id_departamento,id_region,id_pais),
-    FOREIGN KEY (id_pais) REFERENCES pais(id_pais),
+    PRIMARY KEY (id_departamento,id_region),
     FOREIGN KEY (id_region) REFERENCES region(id_region)
 );
 

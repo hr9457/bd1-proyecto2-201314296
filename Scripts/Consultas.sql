@@ -4,95 +4,102 @@
 -- cantidad = 6 (uno por pais)
 -- ************************************
 
-SELECT 
-	partido_politico.eleccion,
-	votacion_pais.anio,
-	pais.nombre_pais,
-    partido.nombre_partido,
-	ROUND( ((partido_politico.votos/votacion_pais.votos) * 100) ,2) AS porcentaje
+SELECT
+	partido_politico.anio AS anio,
+    pais.nombre_pais AS pais,
+    partido.nombre_partido AS partido,
+    ROUND( (partido_politico.votos / votacion_pais.votos) * 100 ,2) AS porcentaje
 FROM (
+		-- uno por pais 
 		SELECT
-			todos_maximos.eleccion AS eleccion,
 			maximo_por_pais.anio AS anio,
 			maximo_por_pais.pais AS pais,
 			todos_maximos.partido AS partido,
 			maximo_por_pais.maximo AS votos
-		FROM(
-				-- 6 partidos uno por pais
+		FROM (
+				-- partido con mayor votacion = 6 (uno por pais) 
 				SELECT 
-					maximos.anio AS anio,
-					maximos.pais AS pais,
-					MAX(maximos.votos) AS maximo
-				FROM(
-					-- votaciones por partido politico en cada pais = 18
-					SELECT 
-						partido_municipio.anio AS anio,
-						departamento.id_pais AS pais,
-						partido_municipio.partido AS partido,
-						SUM(partido_municipio.total) AS votos
-					FROM(
-							SELECT
-								votacion.analfabetos + votacion.alfabetos AS total,
-								municipio.nombre_municipio AS municipio,
-								eleccion.anio_eleccion AS anio,
-								municipio.id_departamento AS departamento,
-								votacion.id_partido AS partido
-							FROM votacion
-							INNER JOIN municipio ON municipio.id_municipio = votacion.id_municipio
+					pais_partidoPolitico.anio AS anio,
+					pais_partidoPolitico.pais AS pais,
+					MAX(pais_partidoPolitico.votos) AS maximo
+				FROM (
+						-- votos partidos politicos por pais = 18 
+						SELECT 
+							votos.anio AS anio,
+							region.id_pais AS pais,
+							votos.partido AS partido,
+							SUM(votos.votos) AS votos
+						FROM (
+								SELECT		
+									eleccion.anio_eleccion AS anio,
+									departamento.id_departamento AS departamento,
+									municipio.id_municipio AS municipio,
+									partido.id_partido AS partido,
+									(votacion.alfabetos + votacion.analfabetos) AS votos
+								FROM votacion
+									INNER JOIN eleccion ON eleccion.id_eleccion = votacion.id_eleccion
+									INNER JOIN partido ON partido.id_partido = votacion.id_partido
+									INNER JOIN municipio ON votacion.id_municipio = municipio.id_municipio
+									INNER JOIN departamento ON departamento.id_departamento = municipio.id_departamento
+							) votos
+							INNER JOIN departamento ON departamento.id_departamento = votos.departamento
+							INNER JOIN region ON region.id_region = departamento.id_region
+						GROUP BY  votos.anio,region.id_pais, votos.partido
+					) pais_partidoPolitico
+				GROUP BY pais_partidoPolitico.anio,pais_partidoPolitico.pais
+				ORDER BY pais_partidoPolitico.pais
+			) maximo_por_pais,
+			(
+				-- votos partidos politicos por pais = 18 
+				SELECT 
+					votos.anio AS anio,
+					region.id_pais AS pais,
+					votos.partido AS partido,
+					SUM(votos.votos) AS votos
+				FROM (
+						SELECT			
+							eleccion.anio_eleccion AS anio,
+							departamento.id_departamento AS departamento,
+							municipio.id_municipio AS municipio,
+							partido.id_partido AS partido,
+							(votacion.alfabetos + votacion.analfabetos) AS votos
+						FROM votacion
 							INNER JOIN eleccion ON eleccion.id_eleccion = votacion.id_eleccion
-							) partido_municipio 
-							INNER JOIN departamento ON departamento.id_departamento = partido_municipio.departamento
-					GROUP BY partido_municipio.anio, departamento.id_pais, partido_municipio.partido
-					)maximos
-				GROUP BY maximos.anio, maximos.pais
-				) maximo_por_pais,
-				(
-					-- votaciones por partido politico en cada pais = 18
-					SELECT 
-						partido_municipio.eleccion AS eleccion,
-						partido_municipio.anio AS anio,
-						departamento.id_pais AS pais,
-						partido_municipio.partido AS partido,
-						SUM(partido_municipio.total) AS votos
-					FROM(
-							SELECT
-								votacion.analfabetos + votacion.alfabetos AS total,
-								municipio.nombre_municipio AS municipio,
-								eleccion.anio_eleccion AS anio,
-								municipio.id_departamento AS departamento,
-								votacion.id_partido AS partido,
-                                eleccion.nombre_eleccion AS eleccion
-							FROM votacion
-							INNER JOIN municipio ON municipio.id_municipio = votacion.id_municipio
-							INNER JOIN eleccion ON eleccion.id_eleccion = votacion.id_eleccion
-							) partido_municipio 
-							INNER JOIN departamento ON departamento.id_departamento = partido_municipio.departamento
-					GROUP BY partido_municipio.eleccion ,partido_municipio.anio, departamento.id_pais, partido_municipio.partido
-					) todos_maximos
-		WHERE maximo_por_pais.pais = todos_maximos.pais and maximo_por_pais.anio = todos_maximos.anio and maximo_por_pais.maximo = todos_maximos.votos
-    ) partido_politico
+							INNER JOIN partido ON partido.id_partido = votacion.id_partido
+							INNER JOIN municipio ON votacion.id_municipio = municipio.id_municipio
+							INNER JOIN departamento ON departamento.id_departamento = municipio.id_departamento
+					) votos
+					INNER JOIN departamento ON departamento.id_departamento = votos.departamento
+					INNER JOIN region ON region.id_region = departamento.id_region
+				GROUP BY votos.anio,region.id_pais, votos.partido
+			) todos_maximos
+		WHERE maximo_por_pais.pais = todos_maximos.pais AND maximo_por_pais.anio = todos_maximos.anio AND maximo_por_pais.maximo = todos_maximos.votos
+	) partido_politico
+    
     INNER JOIN (
-				-- cantidad de votos por pais = 6 
-				SELECT 
-					votaciones.anio  AS anio,
-					departamento.id_pais AS pais,
-					SUM(votaciones.total) AS votos
-				FROM(
-					SELECT
-						votacion.analfabetos + votacion.alfabetos AS total,
-						municipio.nombre_municipio AS municipio,
-						eleccion.anio_eleccion AS anio,
-						municipio.id_departamento AS departamento
-					FROM votacion
-						INNER JOIN municipio ON municipio.id_municipio = votacion.id_municipio
-						INNER JOIN eleccion ON eleccion.id_eleccion = votacion.id_eleccion
-					) votaciones
-					INNER JOIN departamento ON departamento.id_departamento = votaciones.departamento
-				GROUP BY votaciones.anio, departamento.id_pais
-                ) 
-                votacion_pais ON votacion_pais.pais = partido_politico.pais
-		INNER JOIN pais ON pais.id_pais = partido_politico.pais
-        INNER JOIN partido ON partido.id_partido =  partido_politico.partido;
+				-- votacion por pais 
+				SELECT
+					region.id_pais AS pais,
+					SUM(votos_pais.votos) AS votos
+				FROM (
+						SELECT
+							departamento.id_departamento AS departamento,
+							municipio.id_municipio AS municipio,
+							(votacion.alfabetos + votacion.analfabetos) AS votos
+						FROM votacion
+							INNER JOIN sexo ON  sexo.id_sexo = votacion.id_sexo
+							INNER JOIN raza ON  raza.id_raza = votacion.id_raza
+							INNER JOIN municipio ON votacion.id_municipio = municipio.id_municipio
+							INNER JOIN departamento ON departamento.id_departamento = municipio.id_departamento
+					) votos_pais
+					INNER JOIN departamento ON departamento.id_departamento = votos_pais.departamento
+					INNER JOIN region ON region.id_region = departamento.id_region
+				GROUP BY region.id_pais
+                ) votacion_pais ON votacion_pais.pais = partido_politico.pais
+	
+    INNER JOIN pais ON pais.id_pais = partido_politico.pais
+    INNER JOIN partido ON partido.id_partido = partido_politico.partido;
+
 
 
 
@@ -104,148 +111,226 @@ FROM (
 -- y por pais. Tiene que dar el 100 por ciento
 -- ************************************
 
-SELECT 
-	voto_por_departamento.anio,
-    pais.nombre_pais,
-    departamento.nombre_departamento,
-    voto_por_departamento.votos,
-    ROUND( ( voto_por_departamento.votos / total_de_votos.votos ) * 100 ,2) AS porcentaje
-FROM(
-
-		-- cantidad de votos por pais dividio por departamento = 81 departamentos
-		SELECT 
-			votaciones.anio  AS anio,
-			departamento.id_pais AS pais,
-			departamento.id_departamento AS departamento,
-			SUM(votaciones.total) AS votos
-		FROM(
-			-- conteo de todos los votantes (solo mujeres) 
-			SELECT
-				votacion.analfabetos + votacion.alfabetos AS total,
-				municipio.nombre_municipio AS municipio,
-				eleccion.anio_eleccion AS anio,
-				municipio.id_departamento AS departamento,
-				votacion.id_sexo AS sexo,
-				sexo.nombre_sexo
-			FROM votacion
-				INNER JOIN municipio ON municipio.id_municipio = votacion.id_municipio
-				INNER JOIN eleccion ON eleccion.id_eleccion = votacion.id_eleccion 
-				INNER JOIN sexo ON  sexo.id_sexo = votacion.id_sexo
-			WHERE sexo.nombre_sexo = 'mujeres'
-			-- 
-			) votaciones
-			INNER JOIN departamento ON departamento.id_departamento = votaciones.departamento
-		GROUP BY votaciones.anio, departamento.id_pais,departamento.id_departamento
-		ORDER BY departamento.id_pais, departamento.id_departamento
-        ) voto_por_departamento     
-        INNER JOIN (
-			-- votos de mujeres por pais = 6 paises
-			SELECT 
-				votaciones_mujeres.anio AS anio,
-				departamento.id_pais AS pais,
-				SUM(votaciones_mujeres.total) AS votos
-			FROM (
-					-- conteo de todos los votantes (solo mujeres) 
-					SELECT
-						votacion.analfabetos + votacion.alfabetos AS total,
-						municipio.id_municipio AS municipio,
-						eleccion.anio_eleccion AS anio,
-						municipio.id_departamento AS departamento,
-						votacion.id_sexo AS sexo,
-						sexo.nombre_sexo
-					FROM votacion
-						INNER JOIN municipio ON municipio.id_municipio = votacion.id_municipio
-						INNER JOIN eleccion ON eleccion.id_eleccion = votacion.id_eleccion 
-						INNER JOIN sexo ON  sexo.id_sexo = votacion.id_sexo
-					WHERE sexo.nombre_sexo = 'mujeres'
-					) votaciones_mujeres
-					INNER JOIN departamento ON departamento.id_departamento = votaciones_mujeres.departamento 
-			GROUP BY votaciones_mujeres.anio, departamento.id_pais
-            ) total_de_votos ON total_de_votos.anio = voto_por_departamento.anio  and total_de_votos.pais = voto_por_departamento.pais
-            INNER JOIN pais ON pais.id_pais = voto_por_departamento.pais
-            INNER JOIN departamento ON departamento.id_departamento = voto_por_departamento.departamento
-ORDER BY voto_por_departamento.pais;
-
-
-
-
-
-
--- ************************************
--- 4. Desplegar todas las regiones por paises
--- en donde predomina la raza indigena, hay mas votos que otras razas 
--- cantidad = 4
--- ************************************
-SELECT 
-	pais.nombre_pais,
-    maximo_por_region.anio,
-    region.nombre_region,
-    maximo_por_region.maximo AS votos
+SELECT
+	pais.nombre_pais AS pais,
+    departamento.nombre_departamento as departamento,
+    voto_por_departamento.votos as votos,
+    ROUND( (voto_por_departamento.votos / total_de_votos.votos) * 100 ,2) as porcentaje
 FROM (
-		-- maximos por region  resultados = 22 (region-pais)
-		SELECT 
-			raza_por_region.pais AS pais,
-			raza_por_region.anio AS anio,
-			raza_por_region.region AS region,
-			MAX(raza_por_region.votos) AS maximo
+		-- votaciones de mujeres pais y por departamento = 81 resultados
+		SELECT
+			region.id_pais AS pais,
+			votos_pais.departamento as departamento,
+			SUM(votos_pais.votos) AS votos
 		FROM (
-				-- 66 resultados 
-				SELECT 
-					departamento.id_pais AS pais,
-					votaciones.anio AS anio,
-					departamento.id_region AS region,
-					votaciones.raza AS raza,
-					SUM(votaciones.poblacion) AS votos
+				SELECT
+					departamento.id_departamento AS departamento,
+					municipio.id_municipio AS municipio,
+					(votacion.alfabetos + votacion.analfabetos) AS votos
+				FROM votacion
+					INNER JOIN sexo ON  sexo.id_sexo = votacion.id_sexo AND sexo.nombre_sexo = 'mujeres'
+					INNER JOIN municipio ON votacion.id_municipio = municipio.id_municipio
+					INNER JOIN departamento ON departamento.id_departamento = municipio.id_departamento
+			) votos_pais
+			INNER JOIN departamento ON departamento.id_departamento = votos_pais.departamento
+			INNER JOIN region ON region.id_region = departamento.id_region
+		GROUP BY region.id_pais, votos_pais.departamento
+		ORDER BY region.id_pais
+	) voto_por_departamento
+    INNER JOIN (
+				-- votacion por pais de solo mujeres
+				SELECT
+				region.id_pais AS pais,
+				SUM(votos_pais.votos) AS votos
 				FROM (
-						-- votaciones viendo la raza que voto = 20970 
-						SELECT
-							(votacion.analfabetos + votacion.alfabetos) AS poblacion,
-							votacion.id_municipio AS municipio,
-							eleccion.anio_eleccion AS anio,
-							votacion.id_raza AS raza,
-							raza.nombre_raza
-						FROM votacion
-							INNER JOIN eleccion ON eleccion.id_eleccion = votacion.id_eleccion
-							INNER JOIN municipio ON municipio.id_municipio = votacion.id_municipio
-							INNER JOIN raza ON raza.id_raza = votacion.id_raza
-						-- WHERE raza.nombre_raza = 'INDIGENAS'            
-						) votaciones
-						INNER JOIN departamento ON departamento.id_departamento = votaciones.municipio
-				GROUP BY departamento.id_pais,votaciones.anio, departamento.id_region,votaciones.raza
-				ORDER BY departamento.id_pais
-		) raza_por_region
-		GROUP BY raza_por_region.pais, raza_por_region.anio, raza_por_region.region
-	) maximo_por_region
+					SELECT
+						departamento.id_departamento AS departamento,
+						municipio.id_municipio AS municipio,
+						(votacion.alfabetos + votacion.analfabetos) AS votos
+					FROM votacion
+						INNER JOIN sexo ON  sexo.id_sexo = votacion.id_sexo AND sexo.nombre_sexo = 'mujeres'
+						INNER JOIN municipio ON votacion.id_municipio = municipio.id_municipio
+						INNER JOIN departamento ON departamento.id_departamento = municipio.id_departamento
+				) votos_pais
+				INNER JOIN departamento ON departamento.id_departamento = votos_pais.departamento
+				INNER JOIN region ON region.id_region = departamento.id_region
+				GROUP BY region.id_pais
+				) total_de_votos on total_de_votos.pais = voto_por_departamento.pais
+	INNER JOIN pais on pais.id_pais = voto_por_departamento.pais
+    INNER JOIN departamento on departamento.id_departamento = voto_por_departamento.departamento;
+
+
+
+
+
+
+
+
+-- ************************************
+-- 3. Desplegar el nombre del país, nombre del partido político y 
+-- número de alcaldías de los partidos políticos que ganaron más alcaldías por país
+-- ************************************
+
+
+SELECT 
+	pais.nombre_pais as pais,
+    partido.nombre_partido as partido,
+	ganadores.alcadias as alcadias
+FROM (
+		SELECT 
+			alcadias_partidos.pais as pais,
+			MAX(alcadias_partidos.alcadias) AS alcadias
+		FROM (
+				-- cantidad de alcadias ganadas por partidos = 18 resultados
+				select 
+					partidos_ganadores.pais AS pais,
+					partidos_ganadores.partido AS partido,
+					count(partidos_ganadores.partido) AS alcadias
+				from (
+						-- ?
+						select 
+							partido_ganador.pais as pais,
+							partido_ganador.departamento as departamento,
+							partido_ganador.municipio as municipio,
+							partido_municipio.partido,
+							partido_ganador.votos as votos
+						from (
+								-- ganadores por municipio = 1169 reslutados
+								select 
+									ganador_municipio.pais as pais,
+									ganador_municipio.departamento as departamento,
+									ganador_municipio.municipio as municipio,
+									MAX(ganador_municipio.votos) as votos
+								from (
+										-- 3495
+										SELECT
+											region.id_pais AS pais,    
+											votos_pais.departamento,
+											votos_pais.municipio,
+											votos_pais.partido,
+											SUM(votos_pais.votos) AS votos
+										FROM (
+												SELECT
+													partido.id_partido as partido,
+													departamento.id_departamento AS departamento,
+													municipio.id_municipio AS municipio,
+													(votacion.alfabetos + votacion.analfabetos) AS votos
+												FROM votacion
+													INNER JOIN partido on partido.id_partido = votacion.id_partido
+													INNER JOIN municipio ON votacion.id_municipio = municipio.id_municipio
+													INNER JOIN departamento ON departamento.id_departamento = municipio.id_departamento
+											) votos_pais
+											INNER JOIN departamento ON departamento.id_departamento = votos_pais.departamento
+											INNER JOIN region ON region.id_region = departamento.id_region
+										GROUP BY region.id_pais, votos_pais.departamento, votos_pais.municipio,votos_pais.partido
+										) ganador_municipio 
+								GROUP BY ganador_municipio.pais, ganador_municipio.departamento, ganador_municipio.municipio
+							) partido_ganador
+							INNER JOIN (
+										-- 3495
+										SELECT
+											region.id_pais AS pais,    
+											votos_pais.departamento,
+											votos_pais.municipio,
+											votos_pais.partido,
+											SUM(votos_pais.votos) AS votos
+										FROM (
+												SELECT
+													partido.id_partido as partido,
+													departamento.id_departamento AS departamento,
+													municipio.id_municipio AS municipio,
+													(votacion.alfabetos + votacion.analfabetos) AS votos
+												FROM votacion
+													INNER JOIN partido on partido.id_partido = votacion.id_partido
+													INNER JOIN municipio ON votacion.id_municipio = municipio.id_municipio
+													INNER JOIN departamento ON departamento.id_departamento = municipio.id_departamento
+											) votos_pais
+											INNER JOIN departamento ON departamento.id_departamento = votos_pais.departamento
+											INNER JOIN region ON region.id_region = departamento.id_region
+										GROUP BY region.id_pais, votos_pais.departamento, votos_pais.municipio,votos_pais.partido
+									) partido_municipio on partido_municipio.pais = partido_ganador.pais and partido_municipio.departamento = partido_ganador.departamento 
+										and partido_municipio.municipio = partido_ganador.municipio and partido_municipio.votos = partido_ganador.votos
+						) partidos_ganadores
+				group by	partidos_ganadores.pais, partidos_ganadores.partido
+			) alcadias_partidos	
+		GROUP BY alcadias_partidos.pais
+) ganadores
 
 	INNER JOIN (
-				-- 22 resultados solo de la raza indigena
-				SELECT 
-					departamento.id_pais AS pais,
-					votaciones.anio AS anio,
-					departamento.id_region AS region,
-					votaciones.raza AS raza,
-					SUM(votaciones.poblacion) AS votos
-				FROM (
-						-- votaciones viendo la raza que voto = 20970 
-						SELECT
-							(votacion.analfabetos + votacion.alfabetos) AS poblacion,
-							votacion.id_municipio AS municipio,
-							eleccion.anio_eleccion AS anio,
-							votacion.id_raza AS raza,
-							raza.nombre_raza
-						FROM votacion
-							INNER JOIN eleccion ON eleccion.id_eleccion = votacion.id_eleccion
-							INNER JOIN municipio ON municipio.id_municipio = votacion.id_municipio
-							INNER JOIN raza ON raza.id_raza = votacion.id_raza
-						WHERE raza.nombre_raza = 'INDIGENAS'            
-						) votaciones
-						INNER JOIN departamento ON departamento.id_departamento = votaciones.municipio
-				GROUP BY departamento.id_pais,votaciones.anio, departamento.id_region,votaciones.raza
-				ORDER BY departamento.id_pais
-    ) voto_de_indigenas ON voto_de_indigenas.votos = maximo_por_region.maximo
-    INNER JOIN pais ON pais.id_pais = maximo_por_region.pais
-    INNER JOIN region ON region.id_region = maximo_por_region.region;
-
+				-- cantidad de alcadias ganadas por partidos = 18 resultados
+				select 
+					partidos_ganadores.pais AS pais,
+					partidos_ganadores.partido AS partido,
+					count(partidos_ganadores.partido) AS alcadias
+				from (
+						-- ?
+						select 
+							partido_ganador.pais as pais,
+							partido_ganador.departamento as departamento,
+							partido_ganador.municipio as municipio,
+							partido_municipio.partido,
+							partido_ganador.votos as votos
+						from (
+								-- ganadores por municipio = 1169 reslutados
+								select 
+									ganador_municipio.pais as pais,
+									ganador_municipio.departamento as departamento,
+									ganador_municipio.municipio as municipio,
+									MAX(ganador_municipio.votos) as votos
+								from (
+										-- 3495
+										SELECT
+											region.id_pais AS pais,    
+											votos_pais.departamento,
+											votos_pais.municipio,
+											votos_pais.partido,
+											SUM(votos_pais.votos) AS votos
+										FROM (
+												SELECT
+													partido.id_partido as partido,
+													departamento.id_departamento AS departamento,
+													municipio.id_municipio AS municipio,
+													(votacion.alfabetos + votacion.analfabetos) AS votos
+												FROM votacion
+													INNER JOIN partido on partido.id_partido = votacion.id_partido
+													INNER JOIN municipio ON votacion.id_municipio = municipio.id_municipio
+													INNER JOIN departamento ON departamento.id_departamento = municipio.id_departamento
+											) votos_pais
+											INNER JOIN departamento ON departamento.id_departamento = votos_pais.departamento
+											INNER JOIN region ON region.id_region = departamento.id_region
+										GROUP BY region.id_pais, votos_pais.departamento, votos_pais.municipio,votos_pais.partido
+										) ganador_municipio 
+								GROUP BY ganador_municipio.pais, ganador_municipio.departamento, ganador_municipio.municipio
+							) partido_ganador
+							INNER JOIN (
+										-- 3495
+										SELECT
+											region.id_pais AS pais,    
+											votos_pais.departamento,
+											votos_pais.municipio,
+											votos_pais.partido,
+											SUM(votos_pais.votos) AS votos
+										FROM (
+												SELECT
+													partido.id_partido as partido,
+													departamento.id_departamento AS departamento,
+													municipio.id_municipio AS municipio,
+													(votacion.alfabetos + votacion.analfabetos) AS votos
+												FROM votacion
+													INNER JOIN partido on partido.id_partido = votacion.id_partido
+													INNER JOIN municipio ON votacion.id_municipio = municipio.id_municipio
+													INNER JOIN departamento ON departamento.id_departamento = municipio.id_departamento
+											) votos_pais
+											INNER JOIN departamento ON departamento.id_departamento = votos_pais.departamento
+											INNER JOIN region ON region.id_region = departamento.id_region
+										GROUP BY region.id_pais, votos_pais.departamento, votos_pais.municipio,votos_pais.partido
+									) partido_municipio on partido_municipio.pais = partido_ganador.pais and partido_municipio.departamento = partido_ganador.departamento 
+										and partido_municipio.municipio = partido_ganador.municipio and partido_municipio.votos = partido_ganador.votos
+						) partidos_ganadores
+				group by	partidos_ganadores.pais, partidos_ganadores.partido
+	) todos_partidos_alcadia on todos_partidos_alcadia.pais = ganadores.pais and todos_partidos_alcadia.alcadias = ganadores.alcadias
+    INNER JOIN pais on pais.id_pais = ganadores.pais
+    INNER JOIN partido on partido.id_partido = todos_partidos_alcadia.partido;
 
 
 
@@ -256,58 +341,113 @@ FROM (
 -- en donde predomina la raza indigena, hay mas votos que otras razas 
 -- cantidad = 4
 -- ************************************
-SELECT
+SELECT 
 	pais.nombre_pais,
     region.nombre_region,
-    departamento.nombre_departamento,
-    ROUND( ( votos_por_departamento.votos / votos_por_region.votos ) *100 ,2) AS porcentaje
+    maximo_por_region.votos
 FROM (
-		-- votos por pais acumuladop por region y departamento = 81
+		-- maximo de por region = 22 resultados
 		SELECT 
-			departamento.id_pais AS pais,
-			departamento.id_region AS region,
-			departamento.id_departamento AS departamento,
-			SUM(votaciones.votos) AS votos
+			voto_por_raza.pais as pais,
+			voto_por_raza.region as region,
+			MAX(voto_por_raza.votos) as votos
 		FROM (
-				-- votaciones viendo la raza que voto = 20970 
+				-- votacion de pais y region = 66 resultados
 				SELECT
-					(votacion.analfabetos + votacion.alfabetos) AS votos,
-					votacion.id_municipio AS municipio,
-					votacion.id_raza AS raza
-				FROM votacion
-					INNER JOIN eleccion ON eleccion.id_eleccion = votacion.id_eleccion
-					INNER JOIN municipio ON municipio.id_municipio = votacion.id_municipio
-					
-				) votaciones
-				INNER JOIN departamento ON departamento.id_departamento = votaciones.municipio
-		GROUP BY departamento.id_pais, departamento.id_region, departamento.id_departamento
-		ORDER BY departamento.id_pais, departamento.id_region
-        ) votos_por_departamento
-        INNER JOIN (
-					 -- votos por pais y regiones = 22
-					SELECT 
-						departamento.id_pais AS pais,
-						departamento.id_region AS region,
-						SUM(votaciones.votos) AS votos
-					FROM (
-							-- votaciones viendo la raza que voto = 20970 
-							SELECT
-								(votacion.analfabetos + votacion.alfabetos) AS votos,
-								votacion.id_municipio AS municipio,
-								votacion.id_raza AS raza
-							FROM votacion
-								INNER JOIN eleccion ON eleccion.id_eleccion = votacion.id_eleccion
-								INNER JOIN municipio ON municipio.id_municipio = votacion.id_municipio
-								
-							) votaciones
-							INNER JOIN departamento ON departamento.id_departamento = votaciones.municipio
-					GROUP BY departamento.id_pais, departamento.id_region
-					ORDER BY departamento.id_pais        
-        ) votos_por_region ON votos_por_region.pais = votos_por_departamento.pais and votos_por_region.region = votos_por_departamento.region
-		INNER JOIN pais ON pais.id_pais = votos_por_region.pais
-        INNER JOIN region ON region.id_region = votos_por_region.region
-        INNER JOIN departamento ON departamento.id_departamento = votos_por_departamento.departamento;
+					region.id_pais AS pais,
+					region.id_region AS region,
+					votos_pais.raza AS raza,
+					SUM(votos_pais.votos) AS votos
+				FROM (
+						SELECT
+							departamento.id_departamento AS departamento,
+							municipio.id_municipio AS municipio,
+							votacion.id_raza as raza,
+							(votacion.alfabetos + votacion.analfabetos) AS votos
+						FROM votacion
+							INNER JOIN raza ON raza.id_raza = votacion.id_raza
+							INNER JOIN municipio ON votacion.id_municipio = municipio.id_municipio
+							INNER JOIN departamento ON departamento.id_departamento = municipio.id_departamento
+					) votos_pais
+					INNER JOIN departamento ON departamento.id_departamento = votos_pais.departamento
+					INNER JOIN region ON region.id_region = departamento.id_region
+				GROUP BY region.id_pais, region.id_region, votos_pais.raza
+				ORDER BY region.id_pais
+			) voto_por_raza
+		GROUP BY voto_por_raza.pais, voto_por_raza.region
+	) maximo_por_region
+    
+	INNER JOIN (
+				-- votacion de pais y region de solo indigenas = 22 resultados
+				SELECT
+					region.id_pais AS pais,
+					region.id_region AS region,
+					SUM(votos_pais.votos) AS votos
+				FROM (
+						SELECT
+							departamento.id_departamento AS departamento,
+							municipio.id_municipio AS municipio,
+							(votacion.alfabetos + votacion.analfabetos) AS votos
+						FROM votacion
+							INNER JOIN raza ON raza.id_raza = votacion.id_raza and raza.nombre_raza = 'INDIGENAS'
+							INNER JOIN municipio ON votacion.id_municipio = municipio.id_municipio
+							INNER JOIN departamento ON departamento.id_departamento = municipio.id_departamento
+					) votos_pais
+					INNER JOIN departamento ON departamento.id_departamento = votos_pais.departamento
+					INNER JOIN region ON region.id_region = departamento.id_region
+				GROUP BY region.id_pais, region.id_region
+				ORDER BY region.id_pais
+                ) voto_de_indigenas on voto_de_indigenas.pais = maximo_por_region.pais and voto_de_indigenas.region = maximo_por_region.region and voto_de_indigenas.votos = maximo_por_region.votos
+	INNER JOIN pais on pais.id_pais = voto_de_indigenas.pais
+    INNER JOIN region on region.id_region = voto_de_indigenas.region;
 
+
+
+
+
+
+-- ************************************
+-- 7. pais, region y departamento porcentaje
+-- totol = 81
+-- ************************************
+select
+	pais.nombre_pais,
+    region.nombre_region,
+    (voto_por_region.votos / departamento_pais.total) as total_votos
+from (
+		-- votacion por pais y region = 22 resultados 
+		SELECT
+			region.id_pais AS pais,
+			region.id_region as region,
+			SUM(mujer_indigena.votos) AS votos
+		FROM (
+				SELECT
+					departamento.id_departamento AS departamento,
+					municipio.id_municipio AS municipio,
+					(votacion.alfabetos + votacion.analfabetos) AS votos
+				FROM votacion
+					INNER JOIN sexo ON  sexo.id_sexo = votacion.id_sexo
+					INNER JOIN raza ON  raza.id_raza = votacion.id_raza
+					INNER JOIN municipio ON votacion.id_municipio = municipio.id_municipio
+					INNER JOIN departamento ON departamento.id_departamento = municipio.id_departamento
+			) mujer_indigena
+			INNER JOIN departamento ON departamento.id_departamento = mujer_indigena.departamento
+			INNER JOIN region ON region.id_region = departamento.id_region
+		GROUP BY region.id_pais, region.id_region
+	) voto_por_region
+    inner join (
+				-- departamentos por region por pais = 22
+				select 
+					pais.id_pais as pais,
+                    region.id_region as region,
+					count(departamento.id_departamento) as total
+				from departamento
+					inner join region on region.id_region = departamento.id_region
+					inner join pais on pais.id_pais = region.id_pais
+				group by pais.id_pais, region.id_region
+                ) departamento_pais on departamento_pais.pais = voto_por_region.pais and departamento_pais.region = voto_por_region.region
+	inner join pais on pais.id_pais = voto_por_region.pais
+    inner join region on region.id_region = voto_por_region.region;
 
 
 
@@ -330,13 +470,16 @@ FROM (
 			votacion.educacion_media AS nivel_medio,
 			votacion.universitario AS universitario,
 			votacion.id_municipio AS municipio,
-            municipio.id_departamento AS departamento
+            departamento.id_departamento AS departamento
 		FROM votacion
 			INNER JOIN municipio ON municipio.id_municipio = votacion.id_municipio
+            INNER JOIN departamento ON departamento.id_departamento = municipio.id_departamento
 	) votaciones
     INNER JOIN departamento ON departamento.id_departamento = votaciones.departamento
-    INNER JOIN pais ON pais.id_pais = departamento.id_pais
-GROUP BY departamento.id_pais;
+    INNER JOIN region ON region.id_region = departamento.id_region
+    INNER JOIN pais ON pais.id_pais = region.id_pais
+GROUP BY region.id_pais;
+
 
 
 
@@ -346,61 +489,107 @@ GROUP BY departamento.id_pais;
 -- ************************************
 -- 9. Desplegar el nombre del pais y el porcentaje de votos por raza
 -- ************************************
-SELECT
-	pais.nombre_pais,
-    raza.nombre_raza,
-    ROUND( (votacion_por_raza.votos / votos_por_pais.votos) * 100 ,2) AS porcentaje
+SELECT 
+	pais.nombre_pais AS pais,
+    raza.nombre_raza AS raza,
+    ROUND( (votacion_por_raza.votos / votos.votos) *100 ,2) AS porcentaje
 FROM (
-		-- 18 resultados votaciones por raza
-		SELECT 
-			departamento.id_pais AS pais,
-			votaciones.raza AS raza,
-			SUM(votaciones.votos) AS votos
+		-- votacion por pais 
+		SELECT
+			region.id_pais AS pais,
+			votos_raza.raza AS raza,
+			SUM(votos_raza.votos) AS votos
 		FROM (
-				-- votaciones viendo la raza que voto = 20970 
 				SELECT
-					(votacion.analfabetos + votacion.alfabetos) AS votos,
-					votacion.id_municipio AS municipio,
-					votacion.id_raza AS raza
+					departamento.id_departamento AS departamento,
+					municipio.id_municipio AS municipio,
+					votacion.id_raza AS raza,
+					(votacion.alfabetos + votacion.analfabetos) AS votos
 				FROM votacion
-					INNER JOIN eleccion ON eleccion.id_eleccion = votacion.id_eleccion
-					INNER JOIN municipio ON municipio.id_municipio = votacion.id_municipio
-                    
-				) votaciones
-				INNER JOIN departamento ON departamento.id_departamento = votaciones.municipio
-		GROUP BY departamento.id_pais, votaciones.raza
-		ORDER BY departamento.id_pais      
-        
-		) votacion_por_raza 
-		INNER JOIN (        
-			-- votos por pais
-			SELECT 
-				departamento.id_pais AS pais,
-				SUM(votaciones.votos) AS votos
-			FROM (
-					-- votaciones viendo la raza que voto = 20970 
+					INNER JOIN sexo ON  sexo.id_sexo = votacion.id_sexo
+					INNER JOIN raza ON  raza.id_raza = votacion.id_raza
+					INNER JOIN municipio ON votacion.id_municipio = municipio.id_municipio
+					INNER JOIN departamento ON departamento.id_departamento = municipio.id_departamento
+			) votos_raza
+			INNER JOIN departamento ON departamento.id_departamento = votos_raza.departamento
+			INNER JOIN region ON region.id_region = departamento.id_region
+		GROUP BY region.id_pais, votos_raza.raza
+        ) votacion_por_raza
+        INNER JOIN (
+					-- votacion por pais 
 					SELECT
-						(votacion.analfabetos + votacion.alfabetos) AS votos,
-						votacion.id_municipio AS municipio,
-						votacion.id_raza AS raza
-					FROM votacion
-						INNER JOIN eleccion ON eleccion.id_eleccion = votacion.id_eleccion
-						INNER JOIN municipio ON municipio.id_municipio = votacion.id_municipio
-						
-					) votaciones
-					INNER JOIN departamento ON departamento.id_departamento = votaciones.municipio
-			GROUP BY departamento.id_pais
-			ORDER BY departamento.id_pais            
-            ) votos_por_pais ON votos_por_pais.pais = votacion_por_raza.pais
-            INNER JOIN pais ON pais.id_pais = votacion_por_raza.pais
-            INNER JOIN raza ON raza.id_raza = votacion_por_raza.raza
-ORDER BY pais.nombre_pais;
-            
+						region.id_pais AS pais,
+						SUM(votos_pais.votos) AS votos
+					FROM (
+							SELECT
+								departamento.id_departamento AS departamento,
+								municipio.id_municipio AS municipio,
+								(votacion.alfabetos + votacion.analfabetos) AS votos
+							FROM votacion
+								INNER JOIN sexo ON  sexo.id_sexo = votacion.id_sexo
+								INNER JOIN raza ON  raza.id_raza = votacion.id_raza
+								INNER JOIN municipio ON votacion.id_municipio = municipio.id_municipio
+								INNER JOIN departamento ON departamento.id_departamento = municipio.id_departamento
+						) votos_pais
+						INNER JOIN departamento ON departamento.id_departamento = votos_pais.departamento
+						INNER JOIN region ON region.id_region = departamento.id_region
+					GROUP BY region.id_pais
+        ) votos ON votos.pais = votacion_por_raza.pais
+        INNER JOIN pais ON pais.id_pais = votos.pais
+        INNER JOIN raza ON raza.id_raza = votacion_por_raza.raza
+ORDER BY pais.id_pais;
+        
 
 
+			
+-- ************************************
+-- 11. votos y porcenaje de votos de mujeres alfabetas indigenas
+-- ************************************
 
-
-
+SELECT 
+	pais.nombre_pais AS pais,
+    votacion_mujer_indigena.votos AS votos,
+    ROUND( (votacion_mujer_indigena.votos / mujeres_pais.votos) * 100 ,2)AS porcentaje
+FROM (
+		SELECT
+			region.id_pais AS pais,
+			SUM(mujer_indigena.votos) AS votos
+		FROM (
+				SELECT
+					departamento.id_departamento AS departamento,
+					municipio.id_municipio AS municipio,
+					votacion.alfabetos AS votos
+				FROM votacion
+					INNER JOIN sexo ON  sexo.id_sexo = votacion.id_sexo and sexo.nombre_sexo like 'mujeres'
+					INNER JOIN raza ON  raza.id_raza = votacion.id_raza and raza.nombre_raza like 'INDIGENAS'
+					INNER JOIN municipio ON votacion.id_municipio = municipio.id_municipio
+					INNER JOIN departamento ON departamento.id_departamento = municipio.id_departamento
+			) mujer_indigena
+			INNER JOIN departamento ON departamento.id_departamento = mujer_indigena.departamento
+			INNER JOIN region ON region.id_region = departamento.id_region
+		GROUP BY region.id_pais
+	) votacion_mujer_indigena
+    INNER JOIN (
+				-- votacion por pais
+				SELECT
+					region.id_pais AS pais,
+					SUM(mujer_indigena.votos) AS votos
+				FROM (
+						SELECT
+							departamento.id_departamento AS departamento,
+							municipio.id_municipio AS municipio,
+							(votacion.alfabetos + votacion.analfabetos) AS votos
+						FROM votacion
+							INNER JOIN sexo ON  sexo.id_sexo = votacion.id_sexo
+							INNER JOIN raza ON  raza.id_raza = votacion.id_raza
+							INNER JOIN municipio ON votacion.id_municipio = municipio.id_municipio
+							INNER JOIN departamento ON departamento.id_departamento = municipio.id_departamento
+					) mujer_indigena
+					INNER JOIN departamento ON departamento.id_departamento = mujer_indigena.departamento
+					INNER JOIN region ON region.id_region = departamento.id_region
+				GROUP BY region.id_pais
+    ) mujeres_pais ON mujeres_pais.pais = votacion_mujer_indigena.pais
+    INNER JOIN pais ON pais.id_pais = mujeres_pais.pais;
 
 
 
