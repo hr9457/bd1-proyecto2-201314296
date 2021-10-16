@@ -541,6 +541,150 @@ ORDER BY pais.id_pais;
         
 
 
+
+
+-- ************************************
+-- 10. 
+-- ************************************
+
+SELECT
+	pais.nombre_pais as pais,
+	mayor_disputa.votos as votos
+FROM (
+		SELECT
+			MIN(disputa_votos.votos) as votos
+		FROM (
+				SELECT
+					mayor.pais as pais,
+					(mayor.votos - menor.votos) as votos
+				FROM (
+						-- partido con mas votos por pais = 6 resultados 
+						SELECT
+							votacion_por_partido.pais as pais,
+							MAX( votacion_por_partido.votos) as votos
+						FROM (
+								-- votacion de pais por partido
+								SELECT
+									region.id_pais AS pais,
+									votos_pais.partido as partido,
+									SUM(votos_pais.votos) AS votos
+								FROM (
+										SELECT
+											departamento.id_departamento AS departamento,
+											municipio.id_municipio AS municipio,
+											partido.id_partido as partido,
+											(votacion.alfabetos + votacion.analfabetos) AS votos
+										FROM votacion
+											INNER JOIN partido on partido.id_partido = votacion.id_partido
+											INNER JOIN municipio ON votacion.id_municipio = municipio.id_municipio
+											INNER JOIN departamento ON departamento.id_departamento = municipio.id_departamento
+									) votos_pais
+									INNER JOIN departamento ON departamento.id_departamento = votos_pais.departamento
+									INNER JOIN region ON region.id_region = departamento.id_region
+								GROUP BY region.id_pais, votos_pais.partido
+							) votacion_por_partido
+						GROUP BY votacion_por_partido.pais
+					) mayor,
+					(
+						-- partido con menor votos por pais = 6 resultados 
+						SELECT
+							votacion_por_partido.pais as pais,
+							MIN( votacion_por_partido.votos) as votos
+						FROM (
+								-- votacion de pais por partido
+								SELECT
+									region.id_pais AS pais,
+									votos_pais.partido as partido,
+									SUM(votos_pais.votos) AS votos
+								FROM (
+										SELECT
+											departamento.id_departamento AS departamento,
+											municipio.id_municipio AS municipio,
+											partido.id_partido as partido,
+											(votacion.alfabetos + votacion.analfabetos) AS votos
+										FROM votacion
+											INNER JOIN partido on partido.id_partido = votacion.id_partido
+											INNER JOIN municipio ON votacion.id_municipio = municipio.id_municipio
+											INNER JOIN departamento ON departamento.id_departamento = municipio.id_departamento
+									) votos_pais
+									INNER JOIN departamento ON departamento.id_departamento = votos_pais.departamento
+									INNER JOIN region ON region.id_region = departamento.id_region
+								GROUP BY region.id_pais, votos_pais.partido
+							) votacion_por_partido
+						GROUP BY votacion_por_partido.pais
+					) menor
+				WHERE mayor.pais = menor.pais
+			) disputa_votos
+	) mayor_disputa
+    INNER JOIN (
+				SELECT
+					mayor.pais as pais,
+					(mayor.votos - menor.votos) as votos
+				FROM (
+						-- partido con mas votos por pais = 6 resultados 
+						SELECT
+							votacion_por_partido.pais as pais,
+							MAX( votacion_por_partido.votos) as votos
+						FROM (
+								-- votacion de pais por partido
+								SELECT
+									region.id_pais AS pais,
+									votos_pais.partido as partido,
+									SUM(votos_pais.votos) AS votos
+								FROM (
+										SELECT
+											departamento.id_departamento AS departamento,
+											municipio.id_municipio AS municipio,
+											partido.id_partido as partido,
+											(votacion.alfabetos + votacion.analfabetos) AS votos
+										FROM votacion
+											INNER JOIN partido on partido.id_partido = votacion.id_partido
+											INNER JOIN municipio ON votacion.id_municipio = municipio.id_municipio
+											INNER JOIN departamento ON departamento.id_departamento = municipio.id_departamento
+									) votos_pais
+									INNER JOIN departamento ON departamento.id_departamento = votos_pais.departamento
+									INNER JOIN region ON region.id_region = departamento.id_region
+								GROUP BY region.id_pais, votos_pais.partido
+							) votacion_por_partido
+						GROUP BY votacion_por_partido.pais
+					) mayor,
+					(
+						-- partido con menor votos por pais = 6 resultados 
+						SELECT
+							votacion_por_partido.pais as pais,
+							MIN( votacion_por_partido.votos) as votos
+						FROM (
+								-- votacion de pais por partido
+								SELECT
+									region.id_pais AS pais,
+									votos_pais.partido as partido,
+									SUM(votos_pais.votos) AS votos
+								FROM (
+										SELECT
+											departamento.id_departamento AS departamento,
+											municipio.id_municipio AS municipio,
+											partido.id_partido as partido,
+											(votacion.alfabetos + votacion.analfabetos) AS votos
+										FROM votacion
+											INNER JOIN partido on partido.id_partido = votacion.id_partido
+											INNER JOIN municipio ON votacion.id_municipio = municipio.id_municipio
+											INNER JOIN departamento ON departamento.id_departamento = municipio.id_departamento
+									) votos_pais
+									INNER JOIN departamento ON departamento.id_departamento = votos_pais.departamento
+									INNER JOIN region ON region.id_region = departamento.id_region
+								GROUP BY region.id_pais, votos_pais.partido
+							) votacion_por_partido
+						GROUP BY votacion_por_partido.pais
+					) menor
+				WHERE mayor.pais = menor.pais
+		) diferencia_por_pais on diferencia_por_pais.votos = mayor_disputa.votos
+        INNER JOIN pais on pais.id_pais = diferencia_por_pais.pais;
+
+
+
+
+
+
 			
 -- ************************************
 -- 11. votos y porcenaje de votos de mujeres alfabetas indigenas
@@ -703,6 +847,65 @@ FROM (
                         
                         INNER JOIN pais on pais.id_pais = porcentaje_por_pais.pais;
 
+
+
+
+
+
+
+-- ************************************
+-- 13. 
+-- ************************************
+
+SELECT
+	voto_por_departamento.pais,
+    voto_por_departamento.departamento,
+    voto_por_departamento.votos
+FROM (
+		-- votacion de todoso los departamento de Guatemala = 22 departamentos
+		SELECT
+			pais.nombre_pais AS pais,
+			departamento.nombre_departamento as departamento,
+			SUM(votos_pais.votos) AS votos
+		FROM (
+				SELECT
+					departamento.id_departamento AS departamento,
+					municipio.id_municipio AS municipio,
+					(votacion.alfabetos + votacion.analfabetos) AS votos
+				FROM votacion
+					INNER JOIN sexo ON  sexo.id_sexo = votacion.id_sexo
+					INNER JOIN raza ON  raza.id_raza = votacion.id_raza
+					INNER JOIN municipio ON votacion.id_municipio = municipio.id_municipio
+					INNER JOIN departamento ON departamento.id_departamento = municipio.id_departamento
+			) votos_pais
+			INNER JOIN departamento ON departamento.id_departamento = votos_pais.departamento
+			INNER JOIN region ON region.id_region = departamento.id_region
+			INNER JOIN pais on pais.id_pais = region.id_pais and pais.nombre_pais = 'Guatemala'
+		GROUP BY region.id_pais, departamento.nombre_departamento
+	) voto_por_departamento,
+	(    
+		-- votos de solo pais y departamento de Guatemala
+		SELECT
+			pais.nombre_pais AS pais,
+			departamento.nombre_departamento as departamento,
+			SUM(votos_pais.votos) AS votos
+		FROM (
+				SELECT
+					departamento.id_departamento AS departamento,
+					municipio.id_municipio AS municipio,
+					(votacion.alfabetos + votacion.analfabetos) AS votos
+				FROM votacion
+					INNER JOIN sexo ON  sexo.id_sexo = votacion.id_sexo
+					INNER JOIN raza ON  raza.id_raza = votacion.id_raza
+					INNER JOIN municipio ON votacion.id_municipio = municipio.id_municipio
+					INNER JOIN departamento ON departamento.id_departamento = municipio.id_departamento
+			) votos_pais
+			INNER JOIN departamento ON departamento.id_departamento = votos_pais.departamento and departamento.nombre_departamento = 'Guatemala'
+			INNER JOIN region ON region.id_region = departamento.id_region
+			INNER JOIN pais on pais.id_pais = region.id_pais and pais.nombre_pais = 'Guatemala'
+		GROUP BY region.id_pais, departamento.nombre_departamento
+	) departamento_guatemala 
+WHERE voto_por_departamento.votos > departamento_guatemala.votos;
 
 
 
