@@ -11,7 +11,7 @@
 # Modelos 
 
 ## Modelo Logico 
-<img src="Imagenes/logico.png" width=500px> 
+<img src="Imagenes/Logico.png" width=500px> 
 
 ## Modelo Fisico
 <img src="Imagenes/ER.png" width=500px> 

@@ -1,4 +1,4 @@
--- ************************************
+g-- ************************************
 -- 1. Deplegar para cada eleccion el pais y partido politico que obtuvo mayor porcentaje de votos en su pais
 -- Nombre de la eleccion, el anio eleccion, pais, nombre del partido politico y porcentaje de votos en su pais
 -- cantidad = 6 (uno por pais)
@@ -474,6 +474,70 @@ WHERE  ROUND( (votos_educacion.primaria / votos_municipio.votos )*100 ,2) > 25 A
 
 
 
+SELECT
+	pais.nombre_pais,
+    departamento.nombre_departamento,
+    municipio.nombre_municipio,
+    ROUND( (votos_educacion.primaria / votos_municipio.votos )*100 ,2) as primaria ,
+    ROUND( (votos_educacion.media  / votos_municipio.votos )*100 ,2) as medio ,
+    ROUND( (votos_educacion.universitario  / votos_municipio.votos )*100 ,2) as universitario
+FROM (
+		-- votacion a nivel de municipio por pais y su departamento = 1169
+		SELECT
+			region.id_pais AS pais,
+			votos_pais.departamento as departamento,
+			votos_pais.municipio as municipio,
+			SUM(votos_pais.votos_primaria) AS primaria,
+			SUM(votos_pais.votos_educacion_media) as media,
+			SUM(votos_pais.votos_universitario) as universitario
+		FROM (
+				SELECT
+					departamento.id_departamento AS departamento,
+					municipio.id_municipio AS municipio,
+					votacion.primaria AS votos_primaria,
+					votacion.educacion_media as votos_educacion_media,
+					votacion.universitario as votos_universitario
+				FROM votacion
+					INNER JOIN sexo ON  sexo.id_sexo = votacion.id_sexo
+					INNER JOIN raza ON  raza.id_raza = votacion.id_raza
+					INNER JOIN municipio ON votacion.id_municipio = municipio.id_municipio
+					INNER JOIN departamento ON departamento.id_departamento = municipio.id_departamento
+			) votos_pais
+			INNER JOIN departamento ON departamento.id_departamento = votos_pais.departamento
+			INNER JOIN region ON region.id_region = departamento.id_region
+		GROUP BY region.id_pais,votos_pais.departamento, votos_pais.municipio
+	) votos_educacion
+    
+    INNER JOIN (
+				-- votacion a nivel de municipio por pais y su departamento = 1169
+				SELECT
+					region.id_pais AS pais,
+					votos_pais.departamento as departamento,
+					votos_pais.municipio as municipio,
+					SUM(votos_pais.votos) AS votos
+				FROM (
+						SELECT
+							departamento.id_departamento AS departamento,
+							municipio.id_municipio AS municipio,
+							(votacion.alfabetos + votacion.analfabetos) AS votos
+						FROM votacion
+							INNER JOIN sexo ON  sexo.id_sexo = votacion.id_sexo
+							INNER JOIN raza ON  raza.id_raza = votacion.id_raza
+							INNER JOIN municipio ON votacion.id_municipio = municipio.id_municipio
+							INNER JOIN departamento ON departamento.id_departamento = municipio.id_departamento
+					) votos_pais
+					INNER JOIN departamento ON departamento.id_departamento = votos_pais.departamento
+					INNER JOIN region ON region.id_region = departamento.id_region
+				GROUP BY region.id_pais,votos_pais.departamento, votos_pais.municipio
+                ) votos_municipio on votos_municipio.pais = votos_educacion.pais 
+				and votos_municipio.departamento = votos_educacion.departamento and votos_municipio.municipio = votos_educacion.municipio
+	
+    INNER JOIN pais on pais.id_pais = votos_educacion.pais
+    INNER JOIN departamento on departamento.id_departamento = votos_educacion.departamento
+    INNER JOIN municipio on municipio.id_municipio = votos_educacion.municipio
+WHERE  ROUND( (votos_educacion.primaria / votos_municipio.votos )*100 ,2) <= 25 AND ROUND( (votos_educacion.media  / votos_municipio.votos )*100 ,2) >=30
+AND ROUND( (votos_educacion.universitario  / votos_municipio.votos )*100 ,2) > 25 AND ROUND( (votos_educacion.universitario  / votos_municipio.votos )*100 ,2) <30
+ORDER BY  ROUND( (votos_educacion.universitario  / votos_municipio.votos )*100 ,2);
 
 
 
