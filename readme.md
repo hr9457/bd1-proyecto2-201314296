@@ -3,8 +3,19 @@
 
 # Reglas de Normalizacion 
 
+Reglas de Normalizacion aplicadas para la construccion de la base de datos. 
 
+## 1FN 
 
+Aplicando la primera regla de normalizacion en la base de datos de la cual nos ayuda con los datos repetidos los cuales nos generan la creacion de redundacia en la cual nos permite la eliminacion de las columnas con datos repetidos como sexo y raza en el archivo de entrada y poder tratar la informacion entrante en con su primera forma normalizada.
+
+## 2FN 
+
+Segundo forma normal ayuda a ordenar las tablas (Pais, Region, Departamento, Municipio, Partido y votacion) en conjuntos separados y tenerlas para registros multiples en la base de datos y poder tener las tablas relacionadas con llaves foreaneas.
+
+## 3FN
+
+La segundo regla de normalizacion la cual ayudo a localizar las dependencias formales, transitivas y que no se saben que no dependa de la clave primaria y poderlas separar de la tabla y asi evitar la repeticion de datos en el cual de la tabla votacion se separo surgiendo las tablas (sexo, raza y el tipo de elccion que se llevo a cabo).
 
 <p></p>
 
