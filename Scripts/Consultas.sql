@@ -480,6 +480,51 @@ ORDER BY  ROUND( (votos_educacion.universitario  / votos_municipio.votos )*100 ,
 
 
 
+SELECT
+	pais.nombre_pais,
+    departamento.nombre_departamento,
+    municipio.nombre_municipio,
+    ROUND( ((25 * votos_educacion.primaria)/100) ,0) as primaria ,
+    ROUND( ( (30 * votos_educacion.media) / 100 )  ,0) as media,
+    votos_educacion.universitario  as universitario,
+    votos_educacion.universitario AS votos
+FROM (
+		-- votacion a nivel de municipio por pais y su departamento = 1169
+		SELECT
+			region.id_pais AS pais,
+			votos_pais.departamento as departamento,
+			votos_pais.municipio as municipio,
+			SUM(votos_pais.votos_primaria) AS primaria,
+			SUM(votos_pais.votos_educacion_media) as media,
+			SUM(votos_pais.votos_universitario) as universitario
+		FROM (
+				SELECT
+					departamento.id_departamento AS departamento,
+					municipio.id_municipio AS municipio,
+					votacion.primaria AS votos_primaria,
+					votacion.educacion_media as votos_educacion_media,
+					votacion.universitario as votos_universitario
+				FROM votacion
+					INNER JOIN sexo ON  sexo.id_sexo = votacion.id_sexo
+					INNER JOIN raza ON  raza.id_raza = votacion.id_raza
+					INNER JOIN municipio ON votacion.id_municipio = municipio.id_municipio
+					INNER JOIN departamento ON departamento.id_departamento = municipio.id_departamento
+			) votos_pais
+			INNER JOIN departamento ON departamento.id_departamento = votos_pais.departamento
+			INNER JOIN region ON region.id_region = departamento.id_region
+		GROUP BY region.id_pais,votos_pais.departamento, votos_pais.municipio
+	) votos_educacion
+	
+    INNER JOIN pais on pais.id_pais = votos_educacion.pais
+    INNER JOIN departamento on departamento.id_departamento = votos_educacion.departamento
+    INNER JOIN municipio on municipio.id_municipio = votos_educacion.municipio
+WHERE votos_educacion.universitario > ROUND( ((25 * votos_educacion.primaria)/100) ,0) 
+		AND votos_educacion.universitario < ROUND( ( (30 * votos_educacion.media) / 100 )  ,0);
+
+
+
+
+
 -- ************************************
 -- 6. 
 -- ************************************
