@@ -22,7 +22,7 @@ Segundo forma normal ayuda a ordenar las tablas (Pais, Region, Departamento, Mun
 
 ## 3FN
 
-La segundo regla de normalizacion la cual ayudo a localizar las dependencias formales, transitivas y que no se saben que no dependa de la clave primaria y poderlas separar de la tabla y asi evitar la repeticion de datos en el cual de la tabla votacion se separo surgiendo las tablas (sexo, raza y el tipo de elccion que se llevo a cabo).
+La Tercera regla de normalizacion la cual ayudo a localizar las dependencias formales, transitivas y que no se saben que no dependa de la clave primaria y poderlas separar de la tabla y asi evitar la repeticion de datos en el cual de la tabla votacion se separo surgiendo las tablas (sexo, raza y el tipo de elccion que se llevo a cabo).
 
 <p></p>
 
@@ -186,10 +186,9 @@ La segundo regla de normalizacion la cual ayudo a localizar las dependencias for
 
 * Los Votantes solo pueden estar distinguidas como hombre y mujer
 * Los Votantes puede pertenecer a una sola raza
-* Las Votaciones solo estan distinguidas por elecciones a nivel Municipal
 
 
+# Consideraciones de Diseño
 
-
-
+En las consideraciones del dieseño Las Votaciones solo estan distinguidas por elecciones a nivel Municipal de igual manera el diseño considera la raza y el sexo esto para que cada votante tenga una de estas dos caracteristicas. La direcciones de donde pertenence cada voto estan separadas por diferentes tablas esto para tener direcciones mas exactas de los votatantes  y asi mismo evitar redudancia de datos a la hora de registara las misma direcciones.
 
