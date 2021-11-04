@@ -100,8 +100,8 @@ DROP TABLE sexo;
 DROP TABLE municipio;  
 DROP TABLE departamento;
 DROP TABLE partido; 
-DROP TABLE pais;
 DROP TABLE region;
+DROP TABLE pais;
 
  
 

@@ -18,7 +18,7 @@ Aplicando la primera regla de normalizacion en la base de datos de la cual nos a
 
 ## 2FN 
 
-Segundo forma normal ayuda a ordenar las tablas (Pais, Region, Departamento, Municipio, Partido y votacion) en conjuntos separados y tenerlas para registros multiples en la base de datos y poder tener las tablas relacionadas con llaves foreaneas.
+Segundo forma normal ayudo a ordenar los datos en tablas (Pais, Region, Departamento, Municipio, Partido y votacion) en conjuntos separados y tenerlas para registros multiples en la base de datos y poder tener las tablas relacionadas con llaves foreaneas.
 
 ## 3FN
 

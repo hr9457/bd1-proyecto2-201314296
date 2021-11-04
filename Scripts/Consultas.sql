@@ -519,7 +519,8 @@ FROM (
     INNER JOIN departamento on departamento.id_departamento = votos_educacion.departamento
     INNER JOIN municipio on municipio.id_municipio = votos_educacion.municipio
 WHERE votos_educacion.universitario > ROUND( ((25 * votos_educacion.primaria)/100) ,0) 
-		AND votos_educacion.universitario < ROUND( ( (30 * votos_educacion.media) / 100 )  ,0);
+		AND votos_educacion.universitario < ROUND( ( (30 * votos_educacion.media) / 100 )  ,0)
+ORDER BY votos_educacion.universitario DESC;
 
 
 
